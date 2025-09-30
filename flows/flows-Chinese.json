@@ -1,0 +1,381 @@
+[
+    {
+        "id": "tab-hn-official",
+        "type": "tab",
+        "label": "HN Keyword Monitor (Official API)",
+        "disabled": false,
+        "info": "Poll HN official Firebase v0 API: newstories -> item/<id>.json, filter by keywords, dedupe, JSONL save, expose /hn/latest and /hn/keywords APIs."
+    },
+    {
+        "id": "inj-schedule",
+        "type": "inject",
+        "z": "tab-hn-official",
+        "name": "触发（每天上午九点半）",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "30 09 * * *",
+        "once": true,
+        "onceDelay": 0.5,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 100,
+        "wires": [
+            [
+                "http-newstories"
+            ]
+        ]
+    },
+    {
+        "id": "http-newstories",
+        "type": "http request",
+        "z": "tab-hn-official",
+        "name": "拉取最新500个帖子ID",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "https://hacker-news.firebaseio.com/v0/newstories.json",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 380,
+        "y": 140,
+        "wires": [
+            [
+                "d105059ae294a995"
+            ]
+        ]
+    },
+    {
+        "id": "d105059ae294a995",
+        "type": "split",
+        "z": "tab-hn-official",
+        "name": "拆成单条 ID",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "payload",
+        "x": 570,
+        "y": 140,
+        "wires": [
+            [
+                "2d3b0fa327708b30"
+            ]
+        ]
+    },
+    {
+        "id": "2d3b0fa327708b30",
+        "type": "delay",
+        "z": "tab-hn-official",
+        "name": "限速5毫秒一条消息",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "0.005",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": true,
+        "outputs": 1,
+        "x": 770,
+        "y": 140,
+        "wires": [
+            [
+                "8ef631bc2bd2ba0e"
+            ]
+        ]
+    },
+    {
+        "id": "8ef631bc2bd2ba0e",
+        "type": "http request",
+        "z": "tab-hn-official",
+        "name": "访问单篇帖子ID拉取信息",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "https://hacker-news.firebaseio.com/v0/item/{{{payload}}}.json",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1010,
+        "y": 140,
+        "wires": [
+            [
+                "c6a242953dc04073"
+            ]
+        ]
+    },
+    {
+        "id": "384ddce7d180cc9e",
+        "type": "ui_button",
+        "z": "tab-hn-official",
+        "name": "",
+        "group": "7ba36fb0c99383a6",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "搜索",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "keyword",
+        "payloadType": "global",
+        "topic": "",
+        "topicType": "str",
+        "x": 150,
+        "y": 220,
+        "wires": [
+            [
+                "http-newstories",
+                "eaa3e74f3a300fef"
+            ]
+        ]
+    },
+    {
+        "id": "c6a242953dc04073",
+        "type": "change",
+        "z": "tab-hn-official",
+        "name": "加载关键词",
+        "rules": [
+            {
+                "t": "set",
+                "p": "keywords",
+                "pt": "msg",
+                "to": "$string($globalContext(\"keywords\"))",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1230,
+        "y": 140,
+        "wires": [
+            [
+                "91ea5b3d634b60cf"
+            ]
+        ]
+    },
+    {
+        "id": "eaa3e74f3a300fef",
+        "type": "function",
+        "z": "tab-hn-official",
+        "name": "把关键词写入 global.keyword",
+        "func": "const draft = flow.get('keywordDraft');\nif (draft === undefined || draft === null || draft === '') {\n    msg.payload = '（未输入关键词或为空）';\n    return [null, msg]; // 第二路作为提示\n}\n// 写入全局（默认 store）\nglobal.set('keyword', draft);\nmsg.payload = `已保存到全局：${draft}`;\nreturn [msg, null];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 340,
+        "wires": [
+            [
+                "a4462e924dbec234"
+            ],
+            [
+                "a82640aed07ced7e"
+            ]
+        ]
+    },
+    {
+        "id": "a4462e924dbec234",
+        "type": "ui_text",
+        "z": "tab-hn-official",
+        "group": "7ba36fb0c99383a6",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "name": "结果",
+        "label": "结果",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": "",
+        "color": "#000000",
+        "x": 710,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "a82640aed07ced7e",
+        "type": "ui_text",
+        "z": "tab-hn-official",
+        "group": "7ba36fb0c99383a6",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "name": "提示",
+        "label": "提示",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": "",
+        "color": "#000000",
+        "x": 710,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "322365878784fcc2",
+        "type": "e-mail",
+        "z": "tab-hn-official",
+        "server": "smtp.gmail.com",
+        "port": "587",
+        "authtype": "BASIC",
+        "saslformat": true,
+        "token": "oauth2Response.access_token",
+        "secure": false,
+        "tls": true,
+        "name": "",
+        "dname": "邮件发送",
+        "x": 2020,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "91ea5b3d634b60cf",
+        "type": "function",
+        "z": "tab-hn-official",
+        "name": "function 3",
+        "func": "/******** 关键词（数组或字符串都兼容） ********/\nfunction getKeywords(msg) {\n  let kw = msg.keywords ?? msg.keyword ?? global.get('keywords') ?? global.get('keyword') ?? '';\n  if (Array.isArray(kw)) return [...new Set(kw.map(x => String(x).trim()).filter(Boolean))];\n  if (typeof kw === 'string') {\n    const s = kw.trim();\n    if (!s) return [];\n    if (s.startsWith('[')) { try { kw = JSON.parse(s); } catch { kw = s; } }\n    if (Array.isArray(kw)) return [...new Set(kw.map(x => String(x).trim()).filter(Boolean))];\n    return [...new Set(s.split(/[\\s,]+/).map(x => x.trim()).filter(Boolean))];\n  }\n  return [];\n}\n\n/******** 统一/热度/可读时间 ********/\nfunction norm(s) {\n  const points = Number(s.score || 0);\n  const comments = Number(s.descendants || 0);\n  const hot = points * 0.5 + comments * 0.5;   // 可调\n  const d = new Date((s.time || 0) * 1000);\n  const time_str = d.toLocaleString(\"zh-CN\", { timeZone: \"Asia/Shanghai\" });\n  return {\n    id: s.id,\n    title: s.title || '(no title)',\n    url: s.url || ('https://news.ycombinator.com/item?id=' + s.id),\n    author: s.by,\n    points, comments,\n    time: s.time || 0,\n    time_str,\n    hot,\n    hot_str: Number.isFinite(hot) ? hot.toFixed(1) : \"0.0\",\n    _title: s.title || '', _text: s.text || '', _url: s.url || ''\n  };\n}\n\n/******** 主体：只放命中的 ********/\nconst kws = getKeywords(msg);\nif (!msg.payload || msg.payload.type !== 'story' || kws.length === 0) return null;\n\n// 可选：仅保留过去24小时\nconst since = Math.floor(Date.now() / 1000) - 24 * 60 * 60;\nif (!msg.payload.time || msg.payload.time < since) return null;\n\nconst post = norm(msg.payload);\nconst hay = (post._title + ' ' + post._text + ' ' + post._url).toLowerCase();\nconst hitKeywords = kws.filter(w => {\n  const needle = String(w).toLowerCase().trim();\n  return needle && hay.includes(needle);\n});\n\nif (hitKeywords.length === 0) return null;\n\n// 往下游传“命中的帖子”；保留命中的关键词，供后续分组\npost.hitKeywords = hitKeywords;\nmsg.payload = post;         // 后续 Join 会把这些 post 合成数组\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1400,
+        "y": 140,
+        "wires": [
+            [
+                "68f2449555881574"
+            ]
+        ]
+    },
+    {
+        "id": "68f2449555881574",
+        "type": "join",
+        "z": "tab-hn-official",
+        "name": "整合",
+        "mode": "custom",
+        "build": "array",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": false,
+        "accumulate": false,
+        "timeout": "10",
+        "count": "",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 1550,
+        "y": 140,
+        "wires": [
+            [
+                "aeca3e1584e28a3c"
+            ]
+        ]
+    },
+    {
+        "id": "aeca3e1584e28a3c",
+        "type": "function",
+        "z": "tab-hn-official",
+        "name": "function 1",
+        "func": "const posts = Array.isArray(msg.payload) ? msg.payload : [];\nconst updatedAt = new Date().toLocaleString(\"zh-CN\", { timeZone: \"Asia/Shanghai\" });\n\n// 分桶（每个关键词一个桶），在“关键词维度”去重（url||id）\nconst buckets = {};                 // { kw: [post,...] }\nconst seenPerKw = {};               // { kw: Set(key) }\nfor (const p of posts) {\n  const hits = Array.isArray(p.hitKeywords) ? p.hitKeywords : [];\n  if (hits.length === 0) continue;\n  const key = p.url || p.id;\n  for (const kw of hits) {\n    if (!buckets[kw]) { buckets[kw] = []; seenPerKw[kw] = new Set(); }\n    if (seenPerKw[kw].has(key)) continue;\n    seenPerKw[kw].add(key);\n    buckets[kw].push(p);\n  }\n}\n\n// 生成 sections（只保留非空分组），每组按热度降序取 Top20\nconst sections = Object.keys(buckets)\n  .map(kw => {\n    const arr = buckets[kw].slice().sort((a,b)=> b.hot - a.hot).slice(0,20);\n    return { keyword: kw, items: arr };\n  })\n  .filter(sec => sec.items.length > 0)\n  .sort((a,b) => b.items.length - a.items.length); // 可改为按组内第一条 hot 排序\n\n// 可选：给 ui_table 的扁平数组\nconst flat = [];\nfor (const sec of sections) for (const it of sec.items) flat.push({ keyword: sec.keyword, ...it });\n\n// 输出给 Template / e-mail\nmsg.sections  = sections;                  // 分组结构（Template 用）\nmsg.payload   = flat;                      // 扁平（若你还要表格）\nmsg.keyword   = sections.map(s=>s.keyword).join(', ');\nmsg.updatedAt = updatedAt;\nmsg.topic     = `HN 过去24小时 Top20（按关键词）| ${updatedAt}`; // e-mail 主题\nmsg.sendable  = sections.length > 0;       // 是否有内容可发\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1700,
+        "y": 140,
+        "wires": [
+            [
+                "46bed450f6a399d4"
+            ]
+        ]
+    },
+    {
+        "id": "46bed450f6a399d4",
+        "type": "template",
+        "z": "tab-hn-official",
+        "name": "HTML模版",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "<h2>HN 过去24小时关键词 Top 20（分关键词）</h2>\n<p>关键词：{{keyword}}　|　上次更新：{{updatedAt}}</p>\n\n{{#sections}}\n  <h3 style=\"margin:12px 0 6px\">{{keyword}}（共 {{items.length}} 条，取前 20）</h3>\n  <ol style=\"line-height:1.5; margin:0 0 14px 18px;\">\n  {{#items}}\n    <li style=\"margin:6px 0\">\n      <a href=\"{{url}}\" target=\"_blank\">{{title}}</a><br/>\n      🔥 {{hot_str}} · ▲ {{points}} · 💬 {{comments}} · 👤 {{author}} · 🕒 {{time_str}}\n    </li>\n  {{/items}}\n  </ol>\n{{/sections}}\n",
+        "output": "str",
+        "x": 1870,
+        "y": 140,
+        "wires": [
+            [
+                "322365878784fcc2"
+            ]
+        ]
+    },
+    {
+        "id": "7ba36fb0c99383a6",
+        "type": "ui_group",
+        "name": "Search Page",
+        "tab": "0c9f966f0eb57d2b",
+        "order": 1,
+        "disp": true,
+        "width": 6,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "0c9f966f0eb57d2b",
+        "type": "ui_tab",
+        "name": "MainPage",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "9bf084ce8655c7e6",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-dashboard": "3.6.6",
+            "node-red-node-email": "3.1.0"
+        }
+    }
+]
