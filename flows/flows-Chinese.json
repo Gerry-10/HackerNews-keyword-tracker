@@ -7,6 +7,139 @@
         "info": "Poll HN official Firebase v0 API: newstories -> item/<id>.json, filter by keywords, dedupe, JSONL save, expose /hn/latest and /hn/keywords APIs."
     },
     {
+        "id": "0c9f966f0eb57d2b",
+        "type": "ui_tab",
+        "name": "MainPage",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "ca32b0018830953e",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-light",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "darkTheme": {
+                "default": "#097479",
+                "baseColor": "#097479",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": false
+            },
+            "customTheme": {
+                "name": "Untitled Theme 1",
+                "default": "#4B7930",
+                "baseColor": "#4B7930",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+            },
+            "themeState": {
+                "base-color": {
+                    "default": "#0094CE",
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-titlebar-backgroundColor": {
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-backgroundColor": {
+                    "value": "#fafafa",
+                    "edited": false
+                },
+                "page-sidebar-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-textColor": {
+                    "value": "#1bbfff",
+                    "edited": false
+                },
+                "group-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "widget-textColor": {
+                    "value": "#111111",
+                    "edited": false
+                },
+                "widget-backgroundColor": {
+                    "value": "#0094ce",
+                    "edited": false
+                },
+                "widget-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "base-font": {
+                    "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+                }
+            },
+            "angularTheme": {
+                "primary": "indigo",
+                "accents": "blue",
+                "warn": "red",
+                "background": "grey",
+                "palette": "light"
+            }
+        },
+        "site": {
+            "name": "Node-RED Dashboard",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "false",
+            "allowTempTheme": "true",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "7ba36fb0c99383a6",
+        "type": "ui_group",
+        "name": "Search Page",
+        "tab": "0c9f966f0eb57d2b",
+        "order": 1,
+        "disp": true,
+        "width": 6,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "t1",
+        "type": "ui_tab",
+        "name": "Demo",
+        "icon": "dashboard",
+        "disabled": true,
+        "hidden": true
+    },
+    {
+        "id": "g1",
+        "type": "ui_group",
+        "name": "测试面板",
+        "tab": "t1",
+        "order": 1,
+        "disp": true,
+        "width": "6"
+    },
+    {
         "id": "inj-schedule",
         "type": "inject",
         "z": "tab-hn-official",
@@ -258,7 +391,7 @@
         "tls": true,
         "name": "",
         "dname": "邮件发送",
-        "x": 2020,
+        "x": 2040,
         "y": 140,
         "wires": []
     },
@@ -267,7 +400,7 @@
         "type": "function",
         "z": "tab-hn-official",
         "name": "function 3",
-        "func": "/******** 关键词（数组或字符串都兼容） ********/\nfunction getKeywords(msg) {\n  let kw = msg.keywords ?? msg.keyword ?? global.get('keywords') ?? global.get('keyword') ?? '';\n  if (Array.isArray(kw)) return [...new Set(kw.map(x => String(x).trim()).filter(Boolean))];\n  if (typeof kw === 'string') {\n    const s = kw.trim();\n    if (!s) return [];\n    if (s.startsWith('[')) { try { kw = JSON.parse(s); } catch { kw = s; } }\n    if (Array.isArray(kw)) return [...new Set(kw.map(x => String(x).trim()).filter(Boolean))];\n    return [...new Set(s.split(/[\\s,]+/).map(x => x.trim()).filter(Boolean))];\n  }\n  return [];\n}\n\n/******** 统一/热度/可读时间 ********/\nfunction norm(s) {\n  const points = Number(s.score || 0);\n  const comments = Number(s.descendants || 0);\n  const hot = points * 0.5 + comments * 0.5;   // 可调\n  const d = new Date((s.time || 0) * 1000);\n  const time_str = d.toLocaleString(\"zh-CN\", { timeZone: \"Asia/Shanghai\" });\n  return {\n    id: s.id,\n    title: s.title || '(no title)',\n    url: s.url || ('https://news.ycombinator.com/item?id=' + s.id),\n    author: s.by,\n    points, comments,\n    time: s.time || 0,\n    time_str,\n    hot,\n    hot_str: Number.isFinite(hot) ? hot.toFixed(1) : \"0.0\",\n    _title: s.title || '', _text: s.text || '', _url: s.url || ''\n  };\n}\n\n/******** 主体：只放命中的 ********/\nconst kws = getKeywords(msg);\nif (!msg.payload || msg.payload.type !== 'story' || kws.length === 0) return null;\n\n// 可选：仅保留过去24小时\nconst since = Math.floor(Date.now() / 1000) - 24 * 60 * 60;\nif (!msg.payload.time || msg.payload.time < since) return null;\n\nconst post = norm(msg.payload);\nconst hay = (post._title + ' ' + post._text + ' ' + post._url).toLowerCase();\nconst hitKeywords = kws.filter(w => {\n  const needle = String(w).toLowerCase().trim();\n  return needle && hay.includes(needle);\n});\n\nif (hitKeywords.length === 0) return null;\n\n// 往下游传“命中的帖子”；保留命中的关键词，供后续分组\npost.hitKeywords = hitKeywords;\nmsg.payload = post;         // 后续 Join 会把这些 post 合成数组\nreturn msg;\n",
+        "func": "/******** 关键词（数组或字符串都兼容） ********/\nfunction getKeywords(msg){\n  let kw = msg.keywords ?? msg.keyword ?? global.get('keywords') ?? global.get('keyword') ?? '';\n  if (Array.isArray(kw)) return [...new Set(kw.map(x=>String(x).trim()).filter(Boolean))];\n  if (typeof kw === 'string') {\n    const s = kw.trim();\n    if (!s) return [];\n    if (s.startsWith('[')) { try { kw = JSON.parse(s); } catch { kw = s; } }\n    if (Array.isArray(kw)) return [...new Set(kw.map(x=>String(x).trim()).filter(Boolean))];\n    return [...new Set(s.split(/[\\s,]+/).map(x=>x.trim()).filter(Boolean))];\n  }\n  return [];\n}\n\n/******** 统一/热度/可读时间 ********/\nfunction norm(s){\n  const points   = Number(s.score || 0);\n  const comments = Number(s.descendants || 0);\n  const hot      = points * 0.5 + comments * 0.5;   // 可调\n  const d        = new Date((s.time || 0) * 1000);\n  const time_str = d.toLocaleString(\"zh-CN\", { timeZone: \"Asia/Shanghai\" });\n  return {\n    id: s.id,\n    title: s.title || '(no title)',\n    url: s.url || ('https://news.ycombinator.com/item?id=' + s.id),\n    author: s.by,\n    points, comments,\n    time: s.time || 0,\n    time_str,\n    hot,\n    hot_str: Number.isFinite(hot) ? hot.toFixed(1) : \"0.0\",\n    _title: s.title || '', _text: s.text || '', _url: s.url || ''\n  };\n}\n\n/******** 主体：只放命中的 ********/\nconst kws = getKeywords(msg);\nif (!msg.payload || msg.payload.type !== 'story' || kws.length === 0) return null;\n\n// 可选：仅保留过去24小时\nconst since = Math.floor(Date.now()/1000) - 24*60*60;\nif (!msg.payload.time || msg.payload.time < since) return null;\n\nconst post = norm(msg.payload);\nconst hay = (post._title).toLowerCase();\nconst hits = [];\n\n// 用正则单词边界匹配\nfor (const w of kws){\n  const needle = String(w).trim();\n  if (!needle) continue;\n  try {\n    const regex = new RegExp(`\\\\b${needle}\\\\b`, \"i\"); // \\b 保证是完整单词\n    if (regex.test(hay)) hits.push(w);\n  } catch(e){\n    node.warn(`Invalid regex for keyword: ${needle}`);\n  }\n}\n\nif (hits.length === 0) return null;\n\npost.hitKeywords = hits;\nmsg.payload = post;\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -351,26 +484,73 @@
         ]
     },
     {
-        "id": "7ba36fb0c99383a6",
-        "type": "ui_group",
-        "name": "Search Page",
-        "tab": "0c9f966f0eb57d2b",
-        "order": 1,
-        "disp": true,
-        "width": 6,
-        "collapse": false,
-        "className": ""
+        "id": "23123bb523495217",
+        "type": "ui_text_input",
+        "z": "tab-hn-official",
+        "name": "关键词导入",
+        "label": "请输入关键词（用英文逗号隔开）",
+        "tooltip": "",
+        "group": "7ba36fb0c99383a6",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "text",
+        "delay": "0",
+        "topic": "keywordInput",
+        "sendOnBlur": true,
+        "className": "",
+        "topicType": "msg",
+        "x": 150,
+        "y": 460,
+        "wires": [
+            [
+                "35170b608384d11a"
+            ]
+        ]
     },
     {
-        "id": "0c9f966f0eb57d2b",
-        "type": "ui_tab",
-        "name": "MainPage",
-        "icon": "dashboard",
-        "disabled": false,
-        "hidden": false
+        "id": "d89a2799bed04da0",
+        "type": "change",
+        "z": "tab-hn-official",
+        "name": "缓存到 flow.keywordDraft",
+        "rules": [
+            {
+                "t": "set",
+                "p": "keywordDraft",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "x": 550,
+        "y": 460,
+        "wires": [
+            []
+        ]
     },
     {
-        "id": "9bf084ce8655c7e6",
+        "id": "35170b608384d11a",
+        "type": "function",
+        "z": "tab-hn-official",
+        "name": "function 2",
+        "func": "// 前端传来的 \"AI,OpenAI,LLM\"\nconst raw = msg.payload || \"\";\nconst keywords = raw\n    .split(\",\")                 // 按逗号分隔\n    .map(k => k.trim())         // 去掉空格\n    .filter(k => k.length > 0); // 过滤空的\n\n// 存储到全局变量，供后续流程用\nglobal.set(\"keywords\", keywords);\n\nmsg.keywords = keywords; // 保留在 msg 里，方便调试\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 460,
+        "wires": [
+            [
+                "d89a2799bed04da0"
+            ]
+        ]
+    },
+    {
+        "id": "35d504a81fc89cc5",
         "type": "global-config",
         "env": [],
         "modules": {
