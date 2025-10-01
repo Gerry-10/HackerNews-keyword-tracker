@@ -256,7 +256,7 @@
         "token": "oauth2Response.access_token",
         "secure": false,
         "tls": true,
-        "name": "daixinyi@global.supcon.com",
+        "name": "",
         "dname": "Email sender",
         "x": 2250,
         "y": 140,
@@ -436,7 +436,7 @@
         "hidden": false
     },
     {
-        "id": "8d599ca0c09454ca",
+        "id": "d01394c961bb74da",
         "type": "global-config",
         "env": [],
         "modules": {
