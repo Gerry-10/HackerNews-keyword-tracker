@@ -1,91 +1,93 @@
-HackerNews-keyword-tracker
+# HackerNews-keyword-tracker  
 
-A Node-RED flow that automatically fetches Hacker News stories, filters them by keywords, ranks hotness by score & comments, and delivers a daily Top 20 digest per keyword via e-mail.
+A **Node-RED flow** for tracking Hacker News stories by keywords, ranking them by hotness (score + comments), and delivering a daily Top-20 digest per keyword via e-mail.  
 
-✨ Features
+---
 
-Keyword-based story filtering (supports multiple keywords)
+## ✨ Features  
+- 🔍 Multi-keyword filtering (comma-separated input)  
+- 📈 Hotness score (weighted by points & comments)  
+- 🏆 Top 20 stories per keyword (deduplicated)  
+- 📧 Daily digest via e-mail (HTML format)  
+- 🖥️ Optional front-end dashboard (keyword input, results table)  
+- ⏰ Configurable schedule (default: weekdays at 09:30 AM)  
+- ✅ Works with official Hacker News API  
 
-Hotness score (weighted by upvotes & comments)
+---
 
-Top 20 stories per keyword, aggregated into a single daily e-mail
+## 📋 Requirements  
+- **Node.js** (LTS)  
+- **Node-RED ≥ 3.x**  
 
-Dashboard front-end: keyword input & live story table
+### Palettes  
+- `node-red-dashboard`  
+- `node-red-node-email`  
+- `node-red-node-ui-table` *(optional)*  
 
-Works with official Hacker News API
+---
 
-Optional: local caching to bypass API’s 500-item limit
+## 🚀 Installation  
 
-📂 Project Structure
-flows/hn-digest.flow.json   # Exported Node-RED flow
-screenshots/                # Effect screenshots
-.env.example                # Example environment configuration
-README.md
-LICENSE
-
-🔧 Requirements
-
-Node.js LTS & Node-RED ≥ 3.x
-
-Node-RED Palettes:
-
-node-red-dashboard
-
-node-red-node-email
-
-node-red-node-ui-table (optional)
-
-🚀 Quick Start
-
-Install Node-RED:
-
+### 1. Install Node-RED  
+```bash
 npm install -g --unsafe-perm node-red
 node-red
+```
+
+Then open [http://localhost:1880](http://localhost:1880).  
+
+### 2. Import the flow  
+- Menu → Import → select `flows/hackernews-keyword-tracker.flow.json`  
+
+### 3. Install required palettes  
+Use **Manage palette** to install missing nodes.  
+
+### 4. Configure the e-mail node  
+- **SMTP server**: e.g. `smtp.gmail.com`  
+- **Port**: `465` or `587`  
+- **Username**: your email address  
+- **Password**: app-specific password (not your login password)  
+- **Recipient address**: target e-mail  
+
+### 5. Deploy and test 🚦  
+
+---
+
+## ⚙️ Configuration  
+
+### Keywords  
+- Enter keywords in Dashboard input, or set via `.env`:  
+```env
+KEYWORDS=AI,IoT,UNS,iOS
+```
+
+### Schedule  
+- The **Inject** node is preconfigured for `09:30` on weekdays.  
+- Adjust if needed.  
+
+### Hotness formula  
+- Default:  
+```js
+score * 0.5 + comments * 0.5
+```
+- You can edit inside the **function node**.  
+
+### Time window  
+- Only includes stories from the **last 24h**.  
+
+---
+
+## 📸 Screenshots  
+
+- Dashboard view
+  <img width="1920" height="953" alt="UI" src="https://github.com/user-attachments/assets/800eaca0-05b8-4872-a6b7-8c21894fe893" />
+- Daily digest e-mail
+  <img width="1600" height="848" alt="image" src="https://github.com/user-attachments/assets/5902a01d-188f-494a-8ec4-81b07e493fc0" />
+- Node-RED flow overview
+  <img width="1633" height="956" alt="Nodes Flow Diagram" src="https://github.com/user-attachments/assets/0ebf934b-6a15-459c-9698-48035fa61bc4" />
 
 
-Open http://localhost:1880 and import flows/hn-digest.flow.json.
+---
 
-Install required palettes in “Manage Palette”.
-
-Configure the e-mail node:
-
-SMTP server (e.g. smtp.gmail.com)
-
-Port (465/587)
-
-Username (your email address)
-
-Password (app-specific password, not your login password)
-
-Recipient address
-
-Deploy.
-
-At 09:30 AM on weekdays, the system sends the digest automatically.
-
-You can also trigger manually from the dashboard.
-
-⚙️ Configuration
-
-Keywords: set in dashboard UI or .env → KEYWORDS=AI,IoT,UNS,iOS.
-
-E-mail: use .env variables for SMTP_USER / SMTP_PASS, or configure directly in the e-mail node.
-
-Time window: by default, only stories in the last 24 hours are included.
-
-Hotness weight: editable in the function node (default: score*0.5 + comments*0.5).
-
-📸 Screenshots
-
-Dashboard UI
-
-
-Daily E-mail Digest
-
-
-Node-RED Flow Overview
-
-
-📝 License
-
-MIT License. Feel free to fork, modify and share.
+## 📄 License  
+[MIT License](LICENSE)  
